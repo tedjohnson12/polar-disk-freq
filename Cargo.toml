@@ -1,0 +1,14 @@
+[package]
+name = "_polar-disk-freq"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "_polar_disk_freq"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.21.2"
+ndarray = "0.15.6"
+numpy = "0.21.0"
