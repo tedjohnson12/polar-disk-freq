@@ -55,8 +55,9 @@ def integrate(
     lz_init:float,
     eb_init:float,
     gamma:float,
-    walltime:float
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, str]:
+    walltime:float,
+    epsilon:float
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, str]:
     """
     Integrate equations (7-10) from Martin & Lubow (2019).
     
@@ -89,10 +90,12 @@ def integrate(
         The y component of the tilt vector
     lz : np.ndarray
         The z component of the tilt vector
+    eb : np.ndarray
+        The eccentricity of the binary
     state : str
         The state of the system
     """
-    return _polar_disk_freq.integrate_py(tau_init, dtau, lx_init, ly_init, lz_init, eb_init, gamma, walltime)
+    return _polar_disk_freq.integrate_py(tau_init, dtau, lx_init, ly_init, lz_init, eb_init, gamma, walltime,epsilon)
 
 def get_i(
     lx:np.ndarray,

@@ -21,8 +21,9 @@ fn _polar_disk_freq(_py: Python, m: &PyModule) -> PyResult<()> {
         eb_init: f64,
         gamma: f64,
         walltime: f64,
+        epsilon: f64
     ) -> PyResult<(Py<PyArray1<f64>>,Py<PyArray1<f64>>,Py<PyArray1<f64>>,Py<PyArray1<f64>>,Py<PyArray1<f64>>,String)> {
-        let result: solve::SimResult = solve::integrate(tau_init, dtau, lx_init, ly_init, lz_init, eb_init, gamma, walltime);
+        let result: solve::SimResult = solve::integrate(tau_init, dtau, lx_init, ly_init, lz_init, eb_init, gamma, walltime, epsilon);
 
         let state_str = match result.state {
             solve::State::Prograde => "p",

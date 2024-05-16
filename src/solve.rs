@@ -21,7 +21,7 @@ fn derivatives(
 
     let dlxdtau: f64 = one_minus_eb2*ly*lz + gamma * one_minus_eb2.sqrt() * ly * (2. - 5.0*lx.powf(2.0));
     let dlydtau: f64 = -(1.0+4.0*eb.powf(2.0))*lx*lz - gamma*lx/one_minus_eb2.sqrt()* ( one_minus_eb2*(2.0-5.0*lx.powf(2.0)) + 5.*eb.powf(2.)*lz.powf(2.) );
-    let dlzdtau: f64 = 5.*eb*lx*ly + 5.*gamma*eb.powf(2.)/one_minus_eb2.sqrt()*lx*ly*lz;
+    let dlzdtau: f64 = 5.*eb.powf(2.)*lx*ly + 5.*gamma*eb.powf(2.)/one_minus_eb2.sqrt()*lx*ly*lz;
     let debdtau: f64 = 5.*gamma*eb*one_minus_eb2.sqrt()*lx*ly;
 
     (dlxdtau, dlydtau, dlzdtau, debdtau)
@@ -43,6 +43,14 @@ pub fn init_xyz(
     (i.sin() * (omega-PI/2.).cos(), i.sin() * (omega-PI/2.).sin(), i.cos())
 }
 
+
+enum RKResult {
+    Ok((f64, f64, f64, f64, f64)),
+    Repeat(f64),
+    Err(&'static str),
+}
+
+
 /// Fourth order Runga-Kutta
 fn rk4(
     tau: f64,
@@ -52,42 +60,149 @@ fn rk4(
     lz: f64,
     eb: f64,
     gamma: f64,
- ) -> (f64, f64, f64, f64) {
+    epsilon: f64
+ ) -> RKResult {
 
-    let (dlx, dly, dlz, deb) = derivatives(tau, lx, ly, lz, eb, gamma);
-    
+    let a: f64 = 0.0;
+    let (dlx, dly, dlz, deb) = derivatives(tau+a*dtau, lx, ly, lz, eb, gamma);
     let k1_lx = dtau * dlx;
     let k1_ly = dtau * dly;
     let k1_lz = dtau * dlz;
     let k1_eb = dtau * deb;
 
-    let (dlx, dly, dlz, deb) = derivatives(tau+dtau/2.0,lx+0.5*k1_lx,ly+0.5*k1_ly,lz+0.5*k1_lz,eb+0.5*k1_eb,gamma);
-
+    let a: f64 = 1.0/4.0;
+    let b21: f64 = 1.0/4.0;
+    let (dlx, dly, dlz, deb) = derivatives(
+        tau+a*dtau,
+        lx+b21*k1_lx,
+        ly+b21*k1_ly,
+        lz+b21*k1_lz,
+        eb+b21*k1_eb,
+        gamma
+    );
     let k2_lx = dtau * dlx;
     let k2_ly = dtau * dly;
     let k2_lz = dtau * dlz;
     let k2_eb = dtau * deb;
 
-    let (dlx, dly, dlz, deb) = derivatives(tau+dtau/2.0,lx+0.5*k2_lx,ly+0.5*k2_ly,lz+0.5*k2_lz,eb+0.5*k2_eb,gamma);
-
+    let a: f64 = 3.0/8.0;
+    let b31: f64 = 3.0/32.0;
+    let b32: f64 = 9.0/32.0;
+    let (dlx, dly, dlz, deb) = derivatives(
+        tau+a*dtau,
+        lx+b31*k1_lx + b32*k2_lx,
+        ly+b31*k1_ly + b32*k2_ly,
+        lz+b31*k1_lz + b32*k2_lz,
+        eb+b31*k1_eb + b32*k2_eb,
+        gamma
+    );
     let k3_lx = dtau * dlx;
     let k3_ly = dtau * dly;
     let k3_lz = dtau * dlz;
     let k3_eb = dtau * deb;
 
-    let (dlx, dly, dlz, deb) = derivatives(tau+dtau,lx+k3_lx,ly+k3_ly,lz+k3_lz,eb+k3_eb,gamma);
-
+    let a: f64 = 12.0/13.0;
+    let b41: f64 = 1932.0/2197.0;
+    let b42: f64 = -7200.0/2197.0;
+    let b43: f64 = 7296.0/2197.0;
+    let (dlx, dly, dlz, deb) = derivatives(
+        tau+a*dtau,
+        lx+b41*k1_lx + b42*k2_lx + b43*k3_lx,
+        ly+b41*k1_ly + b42*k2_ly + b43*k3_ly,
+        lz+b41*k1_lz + b42*k2_lz + b43*k3_lz,
+        eb+b41*k1_eb + b42*k2_eb + b43*k3_eb,
+        gamma
+    );
     let k4_lx = dtau * dlx;
     let k4_ly = dtau * dly;
     let k4_lz = dtau * dlz;
     let k4_eb = dtau * deb;
 
-    let dlx = 1.0/6.0 * (k1_lx + 2.0*k2_lx + 2.0*k3_lx + k4_lx);
-    let dly = 1.0/6.0 * (k1_ly + 2.0*k2_ly + 2.0*k3_ly + k4_ly);
-    let dlz = 1.0/6.0 * (k1_lz + 2.0*k2_lz + 2.0*k3_lz + k4_lz);
-    let deb = 1.0/6.0 * (k1_eb + 2.0*k2_eb + 2.0*k3_eb + k4_eb);
+    let a: f64 = 1.0;
+    let b51: f64 = 439.0/216.0;
+    let b52: f64 = -8.0;
+    let b53: f64 = 3680.0/513.0;
+    let b54: f64 = -845.0/4104.0;
+    let (dlx, dly, dlz, deb) = derivatives(
+        tau+a*dtau,
+        lx+b51*k1_lx + b52*k2_lx + b53*k3_lx + b54*k4_lx,
+        ly+b51*k1_ly + b52*k2_ly + b53*k3_ly + b54*k4_ly,
+        lz+b51*k1_lz + b52*k2_lz + b53*k3_lz + b54*k4_lz,
+        eb+b51*k1_eb + b52*k2_eb + b53*k3_eb + b54*k4_eb,
+        gamma
+    );
+    let k5_lx = dtau * dlx;
+    let k5_ly = dtau * dly;
+    let k5_lz = dtau * dlz;
+    let k5_eb = dtau * deb;
 
-    (lx + dlx, ly + dly, lz + dlz, eb + deb)
+    let a: f64 = 1.0/2.0;
+    let b61: f64 = -8.0/27.0;
+    let b62: f64 = 2.0;
+    let b63: f64 = -3544.0/2565.0;
+    let b64: f64 = 1859.0/4104.0;
+    let b65: f64 = -11.0/40.0;
+    let (dlx, dly, dlz, deb) = derivatives(
+        tau+a*dtau,
+        lx+b61*k1_lx + b62*k2_lx + b63*k3_lx + b64*k4_lx + b65*k5_lx,
+        ly+b61*k1_ly + b62*k2_ly + b63*k3_ly + b64*k4_ly + b65*k5_ly,
+        lz+b61*k1_lz + b62*k2_lz + b63*k3_lz + b64*k4_lz + b65*k5_lz,
+        eb+b61*k1_eb + b62*k2_eb + b63*k3_eb + b64*k4_eb + b65*k5_eb,
+        gamma
+    );
+    let k6_lx = dtau * dlx;
+    let k6_ly = dtau * dly;
+    let k6_lz = dtau * dlz;
+    let k6_eb = dtau * deb;
+
+    let c1 = 25.0/216.0;
+    let c2 = 0.0;
+    let c3 = 1408.0/2565.0;
+    let c4 = 2197.0/4104.0;
+    let c5 = -1.0/5.0;
+    
+    // let ch1 = 16.0/135.0;
+    // let ch2 = 0.0;
+    // let ch3 = 6656.0/12825.0;
+    // let ch4 = 28561.0/56430.0;
+    // let ch5 = -9.0/50.0;
+    // let ch6 = 2.0/55.0;
+
+    let ct1 = -1.0/360.0;
+    let ct2 = 0.0;
+    let ct3 = 128.0/4275.0;
+    let ct4 = 2197.0/75240.0;
+    let ct5 = -1.0/50.0;
+    let ct6 = -2.0/55.0;
+
+    let dlx5 = c1*k1_lx + c2*k2_lx + c3*k3_lx + c4*k4_lx + c5*k5_lx;
+    let dly5 = c1*k1_ly + c2*k2_ly + c3*k3_ly + c4*k4_ly + c5*k5_ly;
+    let dlz5 = c1*k1_lz + c2*k2_lz + c3*k3_lz + c4*k4_lz + c5*k5_lz;
+    let deb5 = c1*k1_eb + c2*k2_eb + c3*k3_eb + c4*k4_eb + c5*k5_eb;
+
+    // let dlx6 = ch1*k1_lx + ch2*k2_lx + ch3*k3_lx + ch4*k4_lx + ch5*k5_lx + ch6*k6_lx;
+    // let dly6 = ch1*k1_ly + ch2*k2_ly + ch3*k3_ly + ch4*k4_ly + ch5*k5_ly + ch6*k6_ly;
+    // let dlz6 = ch1*k1_lz + ch2*k2_lz + ch3*k3_lz + ch4*k4_lz + ch5*k5_lz + ch6*k6_lz;
+    // let deb6 = ch1*k1_eb + ch2*k2_eb + ch3*k3_eb + ch4*k4_eb + ch5*k5_eb + ch6*k6_eb;
+
+    let te_lx = (ct1*k1_lx + ct2*k2_lx + ct3*k3_lx + ct4*k4_lx + ct5*k5_lx + ct6*k6_lx).abs();
+    let te_ly = (ct1*k1_ly + ct2*k2_ly + ct3*k3_ly + ct4*k4_ly + ct5*k5_ly + ct6*k6_ly).abs();
+    let te_lz = (ct1*k1_lz + ct2*k2_lz + ct3*k3_lz + ct4*k4_lz + ct5*k5_lz + ct6*k6_lz).abs();
+    let te_eb = (ct1*k1_eb + ct2*k2_eb + ct3*k3_eb + ct4*k4_eb + ct5*k5_eb + ct6*k6_eb).abs();
+
+    let te_max = te_lx.max(te_ly).max(te_lz).max(te_eb);
+
+    let dtau_new: f64 = 0.9 * dtau * (epsilon/te_max).powf(1.0/5.0);
+
+    if dlx5.is_nan() || dly5.is_nan() || dlz5.is_nan() || deb5.is_nan() {
+        RKResult::Err("Found NaN")
+    }
+    else if te_eb > epsilon {
+        RKResult::Repeat(dtau_new)
+    }
+    else {
+        RKResult::Ok((lx + dlx5, ly + dly5, lz + dlz5, eb + deb5, dtau_new))
+    }
 
 }
 
@@ -214,7 +329,7 @@ fn get_quadrant(
         Quadrant::IV
     }
     else {
-        panic!("Invalid quadrant")
+        panic!("Invalid quadrant for ({},{})", x, y);
     }
 }
 
@@ -242,10 +357,10 @@ fn eval_history(
             return Result::Ok(State::Librating);
         }
         else if crossed_x && has_negative {
-            return Result::Ok(State::Retrograde);
+            return Result::Ok(State::Prograde);
         }
         else if crossed_x && has_positive {
-            return Result::Ok(State::Prograde);
+            return Result::Ok(State::Retrograde);
         }
     }
     Result::Ok(State::Unknown)
@@ -265,13 +380,14 @@ pub struct SimResult {
 /// integrate in rk4
 pub fn integrate(
     tau_init: f64,
-    dtau: f64,
+    _dtau: f64,
     lx_init: f64,
     ly_init: f64,
     lz_init: f64,
     eb_init: f64,
     gamma: f64,
     walltime: f64,
+    epsilon: f64
 ) -> SimResult {
     let start = SystemTime::now();
     let end = start + Duration::from_secs_f64(walltime);
@@ -280,6 +396,7 @@ pub fn integrate(
     let mut ly = ly_init;
     let mut lz = lz_init;
     let mut eb = eb_init;
+    let mut dtau = _dtau;
 
     let mut tau_arr = vec![tau_init];
     let mut lx_arr = vec![lx_init];
@@ -289,6 +406,8 @@ pub fn integrate(
 
     let mut i = get_i(lx, ly, lz);
     let mut omega = get_omega(lx, ly);
+    assert!(!i.is_nan(),"Initial i is NaN");
+    assert!(!omega.is_nan(),"Initial omega is NaN");
     
     let mut x = i * omega.cos();
     let mut y = i * omega.sin();
@@ -300,30 +419,46 @@ pub fn integrate(
     
 
     while SystemTime::now() < end {
-        (lx, ly, lz, eb) = rk4(tau, dtau, lx, ly, lz, eb, gamma);
-        tau += dtau;
-        tau_arr.push(tau);
-        lx_arr.push(lx);
-        ly_arr.push(ly);
-        lz_arr.push(lz);
-        eb_arr.push(eb);
-        
-        i = get_i(lx, ly, lz);
-        omega = get_omega(lx, ly);
-        x = i * omega.cos();
-        y = i * omega.sin();
-        let next_quad = get_quadrant(x, y);
-        if next_quad != quad {
-            let transition = QuadrantTransition::new(&quad, &next_quad);
-            if matches!(transition,Result::Ok(_)) {
-                hist.insert(transition.unwrap());
+        let res = rk4(tau, dtau, lx, ly, lz, eb, gamma, epsilon);
+        match res {
+            RKResult::Ok((lx_new,ly_new,lz_new,eb_new,dtau_new)) => {
+                lx = lx_new;
+                ly = ly_new;
+                lz = lz_new;
+                eb = eb_new;
+                dtau = dtau_new;
+                tau += dtau;
+                tau_arr.push(tau);
+                lx_arr.push(lx);
+                ly_arr.push(ly);
+                lz_arr.push(lz);
+                eb_arr.push(eb);
+                i = get_i(lx, ly, lz);
+                omega = get_omega(lx, ly);
+                assert!(!i.is_nan(),"i is NaN for ({}, {}, {}), eb = {}, gamma = {}, i_init = {}, omega_init = {}", lx, ly, lz, eb_init, gamma,get_i(lx_init, ly_init, lz_init),get_omega(lx_init, ly_init));
+                assert!(!omega.is_nan(),"omega is NaN for ({}, {}, {}), eb = {}, gamma = {}", lx, ly, lz, eb_init, gamma);
+                x = i * omega.cos();
+                y = i * omega.sin();
+                let next_quad = get_quadrant(x, y);
+                if next_quad != quad {
+                    let transition = QuadrantTransition::new(&quad, &next_quad);
+                    if matches!(transition,Result::Ok(_)) {
+                        hist.insert(transition.unwrap());
+                    }
+                }
+                current_state = eval_history(&hist).unwrap();
+                if !matches!(current_state, State::Unknown) {
+                    break
+                }
+                quad = next_quad;
+            },
+            RKResult::Repeat(dtau_new) => {
+                dtau = dtau_new;
+            },
+            RKResult::Err(_) => {
+                break
             }
         }
-        current_state = eval_history(&hist).unwrap();
-        if !matches!(current_state, State::Unknown) {
-            break
-        }
-        quad = next_quad;
 
 
     }
@@ -352,7 +487,7 @@ mod tests {
         println!("{}",get_i(lx, ly, lz));
         println!("{}",get_omega(lx, ly));
         let start_time = SystemTime::now();
-        let res = integrate(0.0, 0.1, lx, ly, lz, eb, gamma, 10.0);
+        let res = integrate(0.0, 0.1, lx, ly, lz, eb, gamma, 1.0,1e-10);
         let dtime = start_time.elapsed().unwrap().as_secs_f64();
         println!("{:?}", res);
         println!("Time integrating: {:?}", dtime);
