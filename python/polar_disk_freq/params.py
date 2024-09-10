@@ -4,6 +4,7 @@ Parameters
 
 Control the input parameters of the rebound simulations.
 """
+from numpy import pi, sqrt
 from rebound import Simulation, Particle
 import reboundx
 from reboundx import constants
@@ -84,6 +85,14 @@ class Binary:
         self.mass_fraction = mass_fraction
         self.semimajor_axis_binary = semimajor_axis_binary
         self.eccentricity_binary = eccentricity_binary
+    @property
+    def period(self) -> float:
+        """
+        The period of the binary.
+
+        :type: float
+        """
+        return 2*pi * sqrt(self.semimajor_axis_binary**3 / G / self.mass_binary)
 
     @property
     def mass1(self) -> float:
