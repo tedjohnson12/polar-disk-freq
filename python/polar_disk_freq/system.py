@@ -3,7 +3,7 @@ Circumbinary system module.
 """
 
 import warnings
-from typing import Callable, Iterable, Tuple
+from typing import Callable, Iterable, Tuple, Union
 import numpy as np
 import rebound
 from tqdm.auto import tqdm
@@ -209,7 +209,7 @@ class System:
         binary: params.Binary,
         planet: params.Planet,
         gr: bool,
-        sim: rebound.Simulation = None
+        sim: Union[rebound.Simulation,None] = None
     ):
         self.binary = binary
         self.planet = planet
@@ -230,6 +230,7 @@ class System:
         self.rp_dot = np.zeros(shape=self._init_shape)
         self.rp_2dot = np.zeros(shape=self._init_shape)
         self.t = np.zeros(shape=(1, 0))
+        self.integrate(times=np.array([0]), verbose=0, wrapper=None)
 
     @classmethod
     def from_params(
@@ -535,10 +536,12 @@ class System:
         RuntimeWarning
             If the planet's mass is not zero.
         """
-        if self.planet.mass != 0:
-            msg = 'A planet with mass > 0 is not guaranteed to return to it\'s original position.'
-            warnings.warn(msg, RuntimeWarning)
+        # if self.planet.mass != 0:
+        #     msg = 'A planet with mass > 0 is not guaranteed to return to it\'s original position.'
+        #     warnings.warn(msg, RuntimeWarning)
         if len(self.t) < 2:
+            return False
+        if self.t[-1] < 2 * np.pi * np.sqrt(self.planet.semimajor_axis**3 / params.G / self.binary.mass_binary):
             return False
         else:
             x = self.icosomega
