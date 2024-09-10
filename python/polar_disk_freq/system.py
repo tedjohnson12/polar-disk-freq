@@ -610,6 +610,18 @@ class System:
         The y direction in our coordinate system.
         """
         return -cross(self.x_hat, self.z_hat)
+    @property
+    def r_bin_com(self) -> np.ndarray:
+        """
+        The CoM of the binary.
+        """
+        return (self.r1*self.binary.mass1 + self.r2*self.binary.mass2) / (self.binary.mass1 + self.binary.mass2)
+    @property
+    def r_bin_com_dot(self) -> np.ndarray:
+        """
+        The CoM velocity of the binary.
+        """
+        return (self.r1_dot*self.binary.mass1 + self.r2_dot*self.binary.mass2) / (self.binary.mass1 + self.binary.mass2)
 
     @property
     def specific_angular_momentum(self) -> np.ndarray:
@@ -621,7 +633,7 @@ class System:
         .. math::
             \\vec{h} = \\vec{r} \\times \\vec{v}
         """
-        return cross(self.rp, self.rp_dot)
+        return cross(self.rp-self.r_bin_com, self.rp_dot-self.r_bin_com_dot)
 
     @property
     def specific_torque(self) -> np.ndarray:
