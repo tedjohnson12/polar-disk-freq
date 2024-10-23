@@ -199,7 +199,14 @@ class Planet:
         sim : rebound.Simulation
             The simulation to add the particle to.
         """
+        sim.move_to_com()
         com = sim.com()
+        # p1 = sim.particles['m1']
+        # p2 = sim.particles['m2']
+        # f1 = p1.m/(p1.m+p2.m)*2
+        # f2 = p2.m/(p1.m+p2.m)*2
+        # com = f1*p1+f2*p2
+        # com = (sim.particles['m1'] + sim.particles['m2'])/2
         planet = Particle(
             simulation=sim,
             primary=com,
@@ -212,5 +219,12 @@ class Planet:
             f=self.true_anomaly,
             hash='p'
         )
-        sim.add(planet)
+        sim.add(planet, primary=com)
+        p=sim.particles['p']
+        vmag = sqrt(p.vx**2+p.vy**2+p.vz**2)
+        vmag_exp = sqrt(G*(sim.particles['m1'].m+sim.particles['m2'].m)/p.a)
+        scale = vmag_exp/vmag
+        p.vx *= scale
+        p.vy *= scale
+        p.vz *= scale
         sim.move_to_com()

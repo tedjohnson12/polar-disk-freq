@@ -230,6 +230,8 @@ class System:
         self.rp_dot = np.zeros(shape=self._init_shape)
         self.rp_2dot = np.zeros(shape=self._init_shape)
         self.t = np.zeros(shape=(1, 0))
+        self.reb_inclination = np.zeros(shape=(1, 0))
+        self.reb_omega = np.zeros(shape=(1, 0))
         self.integrate(times=np.array([0]), verbose=0, wrapper=None)
 
     @classmethod
@@ -342,6 +344,8 @@ class System:
         rp = np.empty(shape)
         rp_dot = np.empty(shape)
         rp_2dot = np.empty(shape)
+        reb_inclination = np.empty(shape=(n_steps,))
+        reb_omega = np.empty(shape=(n_steps,))
 
         def wrap(it) -> Iterable:
             """
@@ -399,6 +403,11 @@ class System:
             rp_2dot[self._ix, i] = self.sim.particles[name].ax
             rp_2dot[self._iy, i] = self.sim.particles[name].ay
             rp_2dot[self._iz, i] = self.sim.particles[name].az
+            # Quantities straight from REBOUND
+            bin_com = self.sim.particles[self.binary.name1]+self.sim.particles[self.binary.name2]
+            o = self.sim.particles[name].orbit(primary=bin_com)
+            reb_inclination[i] = o.inc
+            reb_omega[i] = o.omega
         self.r1 = np.append(self.r1, r1, axis=1)
         self.r1_dot = np.append(self.r1_dot, r1_dot, axis=1)
         self.r1_2dot = np.append(self.r1_2dot, r1_2dot, axis=1)
@@ -409,6 +418,8 @@ class System:
         self.rp_dot = np.append(self.rp_dot, rp_dot, axis=1)
         self.rp_2dot = np.append(self.rp_2dot, rp_2dot, axis=1)
         self.t = np.append(self.t, times)
+        self.reb_inclination = np.append(self.reb_inclination, reb_inclination)
+        self.reb_omega = np.append(self.reb_omega, reb_omega)
 
     def integrate_orbits(
         self,
@@ -488,7 +499,8 @@ class System:
         self,
         step=5,
         max_orbits=1000,
-        capture_freq=1
+        capture_freq=1,
+        fail=False
     ):
         """
         Integrate the system just long enough to capture a full path
@@ -519,7 +531,10 @@ class System:
                 step, verbose=1, wrapper=wrapper, capture_freq=capture_freq)
             tot_orbits += step
             if tot_orbits > max_orbits:
-                raise RuntimeError(f'Reached limit of max_orbits={max_orbits}')
+                if fail:
+                    raise RuntimeError(f'Reached limit of max_orbits={max_orbits}')
+                else:
+                    break
 
     @property
     def has_returned(self) -> bool:
@@ -559,8 +574,8 @@ class System:
 
         :type: numpy.ndarray, size=(3,N)
         """
-        l1 = cross(self.r1, self.r1_dot)*self.binary.mass1
-        l2 = cross(self.r2, self.r2_dot)*self.binary.mass2
+        l1 = cross(self.r1-self.r_bin_com, self.r1_dot-self.r_bin_com_dot)*self.binary.mass1
+        l2 = cross(self.r2-self.r_bin_com, self.r2_dot-self.r_bin_com_dot)*self.binary.mass2
         return l1 + l2
 
     @property
@@ -663,6 +678,7 @@ class System:
 
         is the specific angular momentum.
         """
+        # return self.reb_inclination
         h = self.specific_angular_momentum
         h_z = dot(h, self.z_hat)
         h_mag = np.sqrt(dot(h, h))
@@ -752,6 +768,7 @@ class System:
         .. math::
             \\Omega = \\texttt{atan2(}h_x, -h_y \\texttt{)}
         """
+        # return self.reb_omega
         h = self.specific_angular_momentum
         h_x = dot(h, self.x_hat)
         h_y = dot(h, self.y_hat)
