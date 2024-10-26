@@ -2,6 +2,7 @@
 Analytic solutions
 """
 
+from typing import Callable
 import numpy as np
 from scipy.integrate import simpson
 
@@ -158,7 +159,12 @@ class MartinLubow2019:
         """
         return 1 - 2*MartinLubow2019.omega_min(j, e_b, i)/np.pi
     @staticmethod
-    def frac_polar(j:float, e_b:float, n_points:int=2047)->float:
+    def frac_polar(
+        j:float,
+        e_b:float,
+        n_points:int=2047,
+        jacobian: Callable[[np.ndarray], np.ndarray] = lambda x: 0.5*np.sin(x)
+        )->float:
         """
         Compute the fraction of polar orbits assuming the disk is oriented
         isotropically.
@@ -179,8 +185,6 @@ class MartinLubow2019:
         if n_points%2 == 0:
             raise ValueError('n_points must be odd')
         inclination = np.linspace(0, np.pi, n_points)
-        jacobian = np.sin(inclination)
+        jac = jacobian(inclination)
         prob_polar = np.array([MartinLubow2019.prob_polar(j, e_b, i) for i in inclination])
-        numerator = simpson(y=prob_polar*jacobian,x=inclination)
-        denominator = simpson(y=jacobian,x=inclination)
-        return numerator/denominator
+        return simpson(y=prob_polar*jac,x=inclination)
