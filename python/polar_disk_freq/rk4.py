@@ -5,8 +5,8 @@ Python wrapper for bindings
 from typing import Tuple
 import numpy as np
 
+from .system import PROGRADE, RETROGRADE, LIBRATING, UNKNOWN
 from . import _polar_disk_freq
-
 
 def get_gamma(eb:float,j:float)->float:
     """
@@ -57,7 +57,7 @@ def integrate(
     gamma:float,
     walltime:float,
     epsilon:float
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, str]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, str]:
     """
     Integrate equations (7-10) from Martin & Lubow (2019).
     
@@ -92,6 +92,8 @@ def integrate(
         The z component of the tilt vector
     eb : np.ndarray
         The eccentricity of the binary
+    tau_p : float
+        The precession timescale
     state : str
         The state of the system
     """

@@ -374,6 +374,7 @@ pub struct SimResult {
     pub ly: Array1<f64>,
     pub lz: Array1<f64>,
     pub eb: Array1<f64>,
+    pub tau_p: f64,
     pub state: State
 }
 
@@ -416,6 +417,8 @@ pub fn integrate(
     let mut hist = HashSet::<QuadrantTransition>::new();
     let mut current_state = State::Unknown;
 
+    let mut tau_transition = Vec::<f64>::new();
+
     
 
     while SystemTime::now() < end {
@@ -441,13 +444,15 @@ pub fn integrate(
                 y = i * omega.sin();
                 let next_quad = get_quadrant(x, y);
                 if next_quad != quad {
+                    tau_transition.push(tau);
                     let transition = QuadrantTransition::new(&quad, &next_quad);
                     if matches!(transition,Result::Ok(_)) {
                         hist.insert(transition.unwrap());
                     }
                 }
+                let n_transitions = hist.len(); // Require to do at least two transitions in order to get precession timescale
                 current_state = eval_history(&hist).unwrap();
-                if !matches!(current_state, State::Unknown) {
+                if !matches!(current_state, State::Unknown) && n_transitions > 1 {
                     break
                 }
                 quad = next_quad;
@@ -462,6 +467,13 @@ pub fn integrate(
 
 
     }
+    let tau_precession = tau_transition[1] - tau_transition[0];
+    let tau_precession = match current_state {
+        State::Prograde => 4.0 * tau_precession,
+        State::Retrograde => 4.0 * tau_precession,
+        State::Librating => 2.0 * tau_precession,
+        State::Unknown => 0.0
+    };
 
     SimResult {
         tau: Array1::from_vec(tau_arr),
@@ -469,6 +481,7 @@ pub fn integrate(
         ly: Array1::from_vec(ly_arr),
         lz: Array1::from_vec(lz_arr),
         eb: Array1::from_vec(eb_arr),
+        tau_p: tau_precession,
         state: current_state
     }
 }
