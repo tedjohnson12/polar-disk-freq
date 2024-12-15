@@ -1,0 +1,28 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: polar-disk-freq
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file as well as the paper (Johnson, Martin, Lepp, & Lubow, in prep).
+type: software
+authors:
+  - given-names: Ted
+    family-names: Johnson
+    email: ted.johnson@unlv.edu
+    affiliation: UNLV/NCfA
+    orcid: 'https://orcid.org/0000-0002-1570-2203'
+repository-code: 'https://github.com/tedjohnson12/polar-disk-freq'
+abstract: >-
+  This repository provides utilities for estimating the
+  fraction of polar disks in binary systems. More
+  information about the methods can be found in the
+  accompanying paper.
+keywords:
+  - Binary Star
+  - Polar Disk
+  - Secular Evolution
+  - Runge-Kutta
+  - REBOUND
+license: MIT-0
