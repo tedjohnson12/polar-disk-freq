@@ -6,7 +6,7 @@ build-backend = "maturin"
 version = "0.1.0"
 name = "polar-disk-freq"
 authors = [{ name = "Ted Johnson", email = "ted.johnson@unlv.edu" }]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 description = "Utilities to compute the frequency of polar disks in binary systems"
 classifiers = [
     "Programming Language :: Rust",
@@ -19,7 +19,6 @@ dependencies = [
     "scipy",
     "rebound",
     "reboundx",
-    "sqlite3",
     "tqdm"
 ]
 
