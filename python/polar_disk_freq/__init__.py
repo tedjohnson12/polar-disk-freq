@@ -10,3 +10,4 @@ from . import rk4
 from . import search
 from . import utils
 from . import precession
+from . import jmax
