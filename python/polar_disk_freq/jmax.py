@@ -19,7 +19,7 @@ def jmax_p_less_than_2(
         f * (1-f)*(5/2-p) * sqrt(1-eb**2)
     )
     r_in_term = sqrt(alpha)
-    r_out_term = beta**(5/2-p) - 1
+    r_out_term = (beta**(5/2-p) - 1) * beta**(p-2)
     return coeff * r_in_term * r_out_term
 
 def jmax_p_greater_than_2(
@@ -37,9 +37,8 @@ def jmax_p_greater_than_2(
         f * (1-f)*(5/2-p) * sqrt(1-eb**2)
     )
     r_in_term = sqrt(alpha)
-    r_out_term1 = beta**(2-p)
     r_out_term2 = beta**(5/2-p) - 1
-    return coeff * r_in_term * r_out_term1 * r_out_term2
+    return coeff * r_in_term * r_out_term2
 
 def jmax(
     h:float,
