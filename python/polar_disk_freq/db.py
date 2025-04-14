@@ -21,7 +21,8 @@ TABLE_COLS = [
     'state'
 ]
 
-def fmt(val: float)->str:
+
+def fmt(val: float) -> str:
     if isinstance(val, float):
         return f'{val:.6e}'
     elif isinstance(val, int):
@@ -30,7 +31,8 @@ def fmt(val: float)->str:
         return f'\'{val}\''
     return str(val)
 
-def connect(path: Path)->sqlite3.Connection:
+
+def connect(path: Path) -> sqlite3.Connection:
     """
     Connect to the database.
 
@@ -42,6 +44,7 @@ def connect(path: Path)->sqlite3.Connection:
     if path is None:
         return None
     return sqlite3.connect(path)
+
 
 def is_empty(conn: sqlite3.Connection):
     """
@@ -55,6 +58,7 @@ def is_empty(conn: sqlite3.Connection):
     cur = conn.cursor()
     cur.execute('SELECT name FROM sqlite_master')
     return cur.fetchone() is None
+
 
 def setup(
     conn: sqlite3.Connection,
@@ -75,6 +79,7 @@ def setup(
     cur.execute(
         f'{create_str} {TABLE_NAME} ({",".join(TABLE_COLS)})'
     )
+
 
 def insert(
     conn: sqlite3.Connection,
@@ -141,21 +146,22 @@ def insert(
     if commit:
         conn.commit()
 
+
 def get_var(
     conn: sqlite3.Connection,
-    variable:str,
-    mass_binary: float=None,
-    mass_fraction: float=None,
-    semimajor_axis_binary: float=None,
-    eccentricity_binary: float=None,
-    mass_planet: float=None,
-    semimajor_axis_planet: float=None,
-    true_anomaly_planet: float=None,
-    eccentricity_planet: float=None,
-    arg_pariapsis_planet: float=None,
-    inclination: float=None,
-    lon_ascending_node: float=None,
-    has_gr: bool=None
+    variable: str,
+    mass_binary: float = None,
+    mass_fraction: float = None,
+    semimajor_axis_binary: float = None,
+    eccentricity_binary: float = None,
+    mass_planet: float = None,
+    semimajor_axis_planet: float = None,
+    true_anomaly_planet: float = None,
+    eccentricity_planet: float = None,
+    arg_pariapsis_planet: float = None,
+    inclination: float = None,
+    lon_ascending_node: float = None,
+    has_gr: bool = None
 ):
     """
     Get the state of the orbit.

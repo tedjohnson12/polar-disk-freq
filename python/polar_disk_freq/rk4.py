@@ -5,7 +5,6 @@ Python wrapper for bindings
 from typing import Tuple
 import numpy as np
 
-from .system import PROGRADE, RETROGRADE, LIBRATING, UNKNOWN
 from . import _polar_disk_freq
 
 def get_gamma(eb:float,j:float)->float:
